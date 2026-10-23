@@ -12,4 +12,4 @@ english version
 
 guys, idk if if i should write this things here, buts its all a temp file,
 my work is literally do notthing so i think i'll do this shit
-im lowkey annoyed with my carrer, u know? im not 
+im lowkey annoyed with my carrer, u know? im not good with that shit, i just, want be good...

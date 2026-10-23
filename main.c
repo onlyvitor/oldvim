@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "scan.h"
 
@@ -34,11 +35,14 @@ int main(int argc, char **argv)
     size_t read_bytes = fread(content, 1, file_size, fp);
     content[read_bytes] = '\0';
 
-    printf("%s\n", content);
+    printf("%s", content);
 
-    scan();
+    char *buff = scan();
+
+    fwrite(buff, 1, strlen(buff), fp);
 
     free(content);
+    free(buff);
     fclose(fp);
     return 0;
 }
