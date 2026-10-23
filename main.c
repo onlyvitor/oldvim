@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "scan.h"
+
 int main(int argc, char **argv)
 {
     if (argc < 2)
@@ -33,6 +35,8 @@ int main(int argc, char **argv)
     content[read_bytes] = '\0';
 
     printf("%s\n", content);
+
+    scan();
 
     free(content);
     fclose(fp);
