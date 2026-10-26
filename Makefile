@@ -6,7 +6,7 @@ TARGET := oldvim
 
 INPUT := text.rst
 
-.PHONY: all run
+.PHONY: all clean run
 
 all: $(TARGET)
 
@@ -15,3 +15,6 @@ $(TARGET): $(SRC)
 
 run:
 	./$(TARGET) $(INPUT)
+
+clean:
+	rm -f $(TARGET)
