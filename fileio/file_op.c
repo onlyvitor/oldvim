@@ -1,6 +1,8 @@
+#include <stdlib.h>
+
 #include "fileio.h"
 
-FILE *open_file(char *filename)
+FILE *open_file(const char *filename)
 {
     FILE *fp = fopen(filename, "r+");
 
