@@ -16,6 +16,11 @@ int main(int argc, char **argv)
 
     FILE *fp = open_file(argv[1]);
 
+    if (fp == NULL)
+    {
+        return 1;
+    }
+
     bool done = false;
     int status = 0;
 
