@@ -13,7 +13,7 @@ all: $(TARGET)
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
 
-run:
+run: $(TARGET)
 	./$(TARGET) $(INPUT)
 
 clean:
