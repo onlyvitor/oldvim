@@ -1,4 +1,6 @@
+#include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "fileio.h"
 
@@ -8,13 +10,13 @@ FILE *open_file(const char *filename)
 
     if (fp == NULL)
     {
-        perror(filename);
+        fprintf(stderr, "error: cannot open %s: %s\n", filename, strerror(errno));
         return NULL;
     }
 
     if (fseek(fp, 0, SEEK_END) != 0)
     {
-        perror("error: cant seek to the end of the file");
+        perror("error: cannot seek to the end of the file");
         fclose(fp);
         return NULL;
     }
@@ -23,14 +25,14 @@ FILE *open_file(const char *filename)
 
     if (file_end < 0)
     {
-        perror("error: cant get the file size");
+        perror("error: cannot get the file size");
         fclose(fp);
         return NULL;
     }
 
     if (fseek(fp, 0, SEEK_SET) != 0)
     {
-        perror("error: cant seek to the start of the file");
+        perror("error: cannot seek to the start of the file");
         fclose(fp);
         return NULL;
     }
@@ -40,7 +42,7 @@ FILE *open_file(const char *filename)
 
     if (content == NULL)
     {
-        printf("error: cant allocate the content to the heap\n");
+        fprintf(stderr, "error: cannot allocate memory for the file content\n");
         fclose(fp);
         return NULL;
     }
@@ -51,7 +53,7 @@ FILE *open_file(const char *filename)
     {
         if (ferror(fp))
         {
-            perror("error: cant read the file");
+            perror("error: cannot read the file");
         }
         else
         {
@@ -67,7 +69,7 @@ FILE *open_file(const char *filename)
 
     if (fwrite(content, 1, read_bytes, stdout) != read_bytes)
     {
-        perror("error: cant write the content to the stdout");
+        perror("error: cannot write the content to the stdout");
         free(content);
         fclose(fp);
         return NULL;
@@ -75,7 +77,7 @@ FILE *open_file(const char *filename)
 
     if (fseek(fp, 0, SEEK_END) != 0)
     {
-        perror("error: cant seek to the end of the file");
+        perror("error: cannot seek to the end of the file");
         free(content);
         fclose(fp);
         return NULL;
