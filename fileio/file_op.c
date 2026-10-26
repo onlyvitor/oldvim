@@ -45,9 +45,17 @@ FILE *open_file(char *filename)
 
     size_t read_bytes = fread(content, 1, file_size, fp);
 
-    if (ferror(fp))
+    if (read_bytes != file_size)
     {
-        perror("error: cant read the file");
+        if (ferror(fp))
+        {
+            perror("error: cant read the file");
+        }
+        else
+        {
+            fprintf(stderr, "error: unexpected end of file\n");
+        }
+
         free(content);
         fclose(fp);
         return NULL;
