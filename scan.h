@@ -4,6 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *scan();
+char *scan(void);
 
 #endif
