@@ -66,6 +66,7 @@ FILE *open_file(char *filename)
     if (fseek(fp, 0, SEEK_END) != 0)
     {
         perror("error: cant seek to the end of the file");
+        free(content);
         fclose(fp);
         return NULL;
     }
