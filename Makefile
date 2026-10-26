@@ -1,4 +1,5 @@
-FLAGS := -Wall -Werror
+CC := gcc
+CFLAGS := -std=c17 -Wall -Wextra -Werror -g
 
 SRC := main.c io/scan.c io/input.c fileio/file_op.c
 TARGET = oldvim
@@ -6,7 +7,7 @@ TARGET = oldvim
 INPUT := text.rst
 
 all:
-	gcc $(SRC) -o $(TARGET) $(FLAGS)
+	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
 
 run:
 	./$(TARGET) $(INPUT)
