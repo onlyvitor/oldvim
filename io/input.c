@@ -12,7 +12,10 @@ void rawmode_on(struct termios *old) // need the old config of terminal
     raw.c_lflag &= ~(ICANON | ECHO);
 
     // aplica as novas configiurações
-    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &raw) == -1)
+    {
+        perror("error: fail to set for raw mode");
+    }
 }
 
 // return to the default config of terminal
