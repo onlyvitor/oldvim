@@ -1,6 +1,6 @@
 FLAGS := -Wall -Werror
 
-SRC := main.c scan.c scan.h
+SRC := main.c io/scan.c io/input.c fileio/file_op.c
 TARGET = oldvim
 
 INPUT := text.rst
