@@ -7,7 +7,7 @@
 #include <termios.h>
 
 int scan(void);
-void rawmode_on(struct termios *old);
-void rawmode_off(struct termios *old);
+int rawmode_on(struct termios *old);
+int rawmode_off(const struct termios *old);
 
 #endif
