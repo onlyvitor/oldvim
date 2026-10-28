@@ -6,7 +6,7 @@
 
 FILE *open_file(const char *filename)
 {
-    FILE *fp = fopen(filename, "r+");
+    FILE *fp = fopen(filename, "a+");
 
     if (fp == NULL)
     {
