@@ -1,4 +1,4 @@
-CC := gcc
+CC := clang
 CFLAGS := -std=c17 -Wall -Wextra -Werror -g
 
 SRC := main.c io/scan.c io/input.c fileio/file_op.c

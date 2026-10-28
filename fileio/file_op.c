@@ -1,7 +1,3 @@
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "fileio.h"
 
 EditorFile *open_file(const char *filename)
@@ -83,7 +79,23 @@ EditorFile *open_file(const char *filename)
         return NULL;
     }
 
-    EditorFile *ef = {filename, content, sizeof(fp), sizeof(fp), "r+"};
+    EditorFile *ef = (EditorFile *)malloc(sizeof(*ef));
 
+    struct stat st;
+    stat(filename, &st);
+
+    *ef = (EditorFile){
+        .path = (char *)filename,
+        .data = content,
+        .len = read_bytes,
+        .cap = file_size + 1,
+        .mode = st.st_mode & 07777,
+        .exist = true,
+    };
+    fclose(fp);
     return ef;
+}
+
+int append_bytes(EditorFile *ef, const char *s, size_t n)
+{
 }
