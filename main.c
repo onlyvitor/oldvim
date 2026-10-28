@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "fileio/fileio.h"
 #include "io/scan.h"
@@ -19,9 +20,14 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    rawmode_on();
+    if (rawmode_on() != 0)
+    {
+        close_file(ef);
+        return 1;
+    }
 
     bool done = false;
+    bool interactive = isatty(STDIN_FILENO) != 0;
     int status = 0;
 
     while (!done)
@@ -56,10 +62,26 @@ int main(int argc, char **argv)
                 status = 1;
                 done = true;
             }
+            else if (interactive && (putchar(c) == EOF || fflush(stdout) == EOF))
+            {
+                perror("error: cannot show the character");
+                status = 1;
+                done = true;
+            }
         }
     }
 
-    rawmode_off();
+    if (rawmode_off() != 0)
+    {
+        status = 1;
+    }
+
+    if (status == 0 && save_file(ef) != 0)
+    {
+        status = 1;
+    }
+
+    close_file(ef);
 
     return status;
 }
