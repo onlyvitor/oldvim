@@ -68,6 +68,11 @@ int main(int argc, char **argv)
 
     install_signal_handlers();
 
+    if (isatty(STDIN_FILENO) && rawmode_on(&saved_termios) == 0)
+    {
+        rawmode_enabled = 1;
+    }
+
     bool done = false;
     int status = 0;
 
