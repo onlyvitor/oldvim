@@ -12,9 +12,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    FILE *fp = open_file(argv[1]);
+    EditorFile *ef = open_file(argv[1]);
 
-    if (fp == NULL)
+    if (ef == NULL)
     {
         return 1;
     }
@@ -41,21 +41,15 @@ int main(int argc, char **argv)
         }
         else
         {
-            unsigned char byte = (unsigned char)c;
+            char byte = (char)c;
 
-            if (fwrite(&byte, 1, 1, fp) != 1)
+            if (append_bytes(ef, &byte, 1) != 0)
             {
                 perror("error: cannot write the character to the file");
                 status = 1;
                 done = true;
             }
         }
-    }
-
-    if (fclose(fp) != 0)
-    {
-        perror("error: cant close the file");
-        status = 1;
     }
 
     return status;
