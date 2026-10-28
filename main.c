@@ -9,6 +9,8 @@
 #include "fileio/fileio.h"
 #include "io/scan.h"
 
+#define CTRL_D 0x04
+
 static struct termios saved_termios;
 static volatile sig_atomic_t rawmode_enabled = 0;
 
@@ -91,6 +93,10 @@ int main(int argc, char **argv)
                 printf("\n[EOF]\n");
             }
 
+            done = true;
+        }
+        else if (c == CTRL_D)
+        {
             done = true;
         }
         else
