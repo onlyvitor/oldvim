@@ -102,10 +102,11 @@ int main(int argc, char **argv)
         else
         {
             char byte = (char)c;
+            int rc = append_bytes(ef, &byte, 1);
 
-            if (append_bytes(ef, &byte, 1) != 0)
+            if (rc != 0)
             {
-                perror("error: cannot write the character to the file");
+                fprintf(stderr, "error: cannot append the character (code %d)\n", rc);
                 status = 1;
                 done = true;
             }
