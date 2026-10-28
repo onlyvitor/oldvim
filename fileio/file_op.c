@@ -98,4 +98,25 @@ EditorFile *open_file(const char *filename)
 
 int append_bytes(EditorFile *ef, const char *s, size_t n)
 {
+    if (ef->len + n > ef->cap)
+    {
+        size_t cap = ef->cap + 1;
+        while (cap < ef->len + n)
+        {
+            cap *= 2;
+        }
+        char *tmp = realloc(ef->data, cap);
+        if (tmp == NULL)
+        {
+            return -1;
+        }
+        else
+        {
+            ef->data = tmp;
+            ef->cap = cap;
+        }
+    }
+    memcpy(ef->data + ef->len, s, n);
+    ef->len += n;
+    return 0;
 }
