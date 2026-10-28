@@ -4,9 +4,9 @@
 
 #include "fileio.h"
 
-FILE *open_file(const char *filename)
+EditorFile *open_file(const char *filename)
 {
-    FILE *fp = fopen(filename, "a+");
+    FILE *fp = fopen(filename, "r+");
 
     if (fp == NULL)
     {
@@ -83,6 +83,7 @@ FILE *open_file(const char *filename)
         return NULL;
     }
 
-    free(content);
-    return fp;
+    EditorFile *ef = {filename, content, sizeof(fp), sizeof(fp), "r+"};
+
+    return ef;
 }
