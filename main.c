@@ -26,9 +26,9 @@ int main(int argc, char **argv)
 
     while (!done)
     {
-        char *buff = scan();
+        int c = scan();
 
-        if (buff == NULL)
+        if (c == EOF)
         {
             if (ferror(stdin))
             {
@@ -43,16 +43,14 @@ int main(int argc, char **argv)
         }
         else
         {
-            size_t buff_len = strlen(buff);
+            unsigned char byte = (unsigned char)c;
 
-            if (fwrite(buff, 1, buff_len, fp) != buff_len)
+            if (fwrite(&byte, 1, 1, fp) != 1)
             {
-                perror("error: cant write the line to the file");
+                perror("error: cannot write the character to the file");
                 status = 1;
                 done = true;
             }
-
-            free(buff);
         }
     }
 

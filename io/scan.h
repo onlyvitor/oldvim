@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <termios.h>
 
-char *scan(void);
+int scan(void);
 void rawmode_on(struct termios *old);
 void rawmode_off(struct termios *old);
 
