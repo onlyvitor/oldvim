@@ -98,6 +98,7 @@ EditorFile *open_file(const char *filename)
 
 int append_bytes(EditorFile *ef, const char *s, size_t n)
 {
+    // check if its necessary realoc the memory
     if (ef->len + n > ef->cap)
     {
         size_t cap = ef->cap + 1;
