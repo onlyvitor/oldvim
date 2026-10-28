@@ -1,7 +1,5 @@
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "fileio/fileio.h"
 #include "io/scan.h"
