@@ -1,3 +1,4 @@
+/* Feature-test macro: must be defined before any system header. */
 #define _POSIX_C_SOURCE 200809L
 
 #ifndef SCAN_H

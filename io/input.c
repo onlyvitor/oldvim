@@ -9,7 +9,7 @@ static void handle_signal(int signum)
 {
     if (rawmode_enabled)
     {
-        /* tcsetattr e _exit sao async-signal-safe */
+        /* tcsetattr and _exit are async-signal-safe */
         tcsetattr(STDIN_FILENO, TCSANOW, &saved_termios);
     }
 
@@ -35,7 +35,7 @@ static void install_signal_handlers(void)
     }
 }
 
-// enter on raw mode for edit the input
+// enter raw mode for editing the input
 int rawmode_on(void)
 {
     if (rawmode_enabled)
@@ -58,14 +58,14 @@ int rawmode_on(void)
 
     struct termios raw = saved_termios;
 
-    // desativa o buffer de linha e a exibicao automatica na tela
+    // disable line buffering and automatic echo
     raw.c_lflag &= ~(ICANON | ECHO);
 
-    // le um byte por vez, sem timeout
+    // read one byte at a time, without a timeout
     raw.c_cc[VMIN] = 1;
     raw.c_cc[VTIME] = 0;
 
-    // aplica as novas configuracoes
+    // apply the new settings
     if (tcsetattr(STDIN_FILENO, TCSANOW, &raw) == -1)
     {
         perror("error: cannot enable the raw mode");
@@ -77,7 +77,7 @@ int rawmode_on(void)
     return 0;
 }
 
-// return to the default config of terminal
+// restore the default terminal configuration
 int rawmode_off(void)
 {
     if (!rawmode_enabled)
