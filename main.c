@@ -6,6 +6,87 @@
 #include "io/scan.h"
 #include "helpers/helper.h"
 
+static int cursor_step_left(const EditorFile *ef, size_t *cursor, bool interactive)
+{
+    if (*cursor == 0)
+    {
+        return 0;
+    }
+
+    if (ef->data[*cursor - 1] == '\n')
+    {
+        /* Jump to the end of the previous line. */
+        size_t prev_end = *cursor - 1;
+        size_t prev_len = prev_end - line_start_index(ef->data, prev_end);
+
+        if (interactive)
+        {
+            if (fputs("\033[A\r", stdout) == EOF)
+            {
+                return -1;
+            }
+
+            if (prev_len > 0 && fprintf(stdout, "\033[%zuC", prev_len) < 0)
+            {
+                return -1;
+            }
+
+            if (fflush(stdout) == EOF)
+            {
+                return -1;
+            }
+        }
+
+        *cursor = prev_end;
+        return 0;
+    }
+
+    if (interactive)
+    {
+        if (fputs("\033[D", stdout) == EOF || fflush(stdout) == EOF)
+        {
+            return -1;
+        }
+    }
+
+    (*cursor)--;
+    return 0;
+}
+
+static int cursor_step_right(const EditorFile *ef, size_t *cursor, bool interactive)
+{
+    if (*cursor == ef->len)
+    {
+        return 0;
+    }
+
+    if (ef->data[*cursor] == '\n')
+    {
+        /* Jump to the beginning of the next line. */
+        if (interactive)
+        {
+            if (fputs("\r\n", stdout) == EOF || fflush(stdout) == EOF)
+            {
+                return -1;
+            }
+        }
+
+        (*cursor)++;
+        return 0;
+    }
+
+    if (interactive)
+    {
+        if (fputs("\033[C", stdout) == EOF || fflush(stdout) == EOF)
+        {
+            return -1;
+        }
+    }
+
+    (*cursor)++;
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2)
@@ -30,6 +111,7 @@ int main(int argc, char **argv)
     bool done = false;
     bool interactive = isatty(STDIN_FILENO) != 0;
     int status = 0;
+    size_t cursor = ef->len;
 
     while (!done)
     {
@@ -52,44 +134,97 @@ int main(int argc, char **argv)
         {
             done = true;
         }
-        else if (c == LEFT_ARROW || c == RIGHT_ARROW || c == UP_ARROW || c == DOWN_ARROW)
+        else if (c == LEFT_ARROW || c == RIGHT_ARROW)
         {
-            /* Cursor movement is not implemented yet: just do not write it. */
+            int rc = c == LEFT_ARROW
+                         ? cursor_step_left(ef, &cursor, interactive)
+                         : cursor_step_right(ef, &cursor, interactive);
+
+            if (rc != 0)
+            {
+                perror("error: cannot move the cursor");
+                status = 1;
+                done = true;
+            }
+        }
+        else if (c == UP_ARROW || c == DOWN_ARROW)
+        {
+            /* Vertical movement is not implemented yet. */
             continue;
         }
         else if (c == KEY_BACKSPACE)
         {
-            if (ef->len == 0)
+            if (cursor == 0)
             {
                 continue;
             }
 
-            char removed = ef->data[ef->len - 1];
-            remove_byte(ef);
+            size_t pos = cursor - 1;
+            bool removed_newline = ef->data[pos] == '\n';
+            size_t start = line_start_index(ef->data, pos);
 
-            if (interactive && redraw_last_line(ef, removed == '\n') != 0)
+            if (remove_byte_at(ef, pos) != 0)
             {
-                perror("error: cannot redraw the line");
                 status = 1;
                 done = true;
+            }
+            else
+            {
+                cursor = pos;
+
+                if (interactive)
+                {
+                    if (removed_newline && fputs("\033[A", stdout) == EOF)
+                    {
+                        perror("error: cannot move the cursor");
+                        status = 1;
+                        done = true;
+                    }
+                    else if (redraw_from(ef, start, cursor) != 0)
+                    {
+                        perror("error: cannot redraw the line");
+                        status = 1;
+                        done = true;
+                    }
+                }
             }
         }
         else
         {
             char byte = (char)c;
-            int rc = append_bytes(ef, &byte, 1);
+            bool at_end = cursor == ef->len;
+            int rc = insert_bytes(ef, cursor, &byte, 1);
 
             if (rc != 0)
             {
-                fprintf(stderr, "error: cannot append the character (code %d)\n", rc);
+                fprintf(stderr, "error: cannot insert the character (code %d)\n", rc);
                 status = 1;
                 done = true;
             }
-            else if (interactive && (putchar(c) == EOF || fflush(stdout) == EOF))
+            else
             {
-                perror("error: cannot show the character");
-                status = 1;
-                done = true;
+                cursor++;
+
+                if (interactive)
+                {
+                    int redraw_rc;
+
+                    if (at_end)
+                    {
+                        redraw_rc = putchar(c) == EOF ? -1 : 0;
+                    }
+                    else
+                    {
+                        redraw_rc = redraw_from(ef, line_start_index(ef->data, cursor - 1), cursor);
+                    }
+
+                    if (redraw_rc != 0 || fflush(stdout) == EOF)
+                    {
+                        perror("error: cannot show the character");
+                        status = 1;
+                        done = true;
+                    }
+                }
             }
         }
     }
