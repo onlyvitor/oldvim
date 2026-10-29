@@ -245,8 +245,20 @@ EditorFile *open_file(const char *filename)
     return ef;
 }
 
-int append_bytes(EditorFile *ef, const char *s, size_t n)
+int insert_bytes(EditorFile *ef, size_t pos, const char *s, size_t n)
 {
+    if (ef == NULL)
+    {
+        fprintf(stderr, "error: cannot insert into a null editor file\n");
+        return -1;
+    }
+
+    if (pos > ef->len)
+    {
+        fprintf(stderr, "error: insert position is out of range\n");
+        return -1;
+    }
+
     if (n == 0)
     {
         return 0;
@@ -287,11 +299,23 @@ int append_bytes(EditorFile *ef, const char *s, size_t n)
         ef->cap = cap;
     }
 
-    memcpy(ef->data + ef->len, s, n);
+    memmove(ef->data + pos + n, ef->data + pos, ef->len - pos);
+    memcpy(ef->data + pos, s, n);
     ef->len += n;
     ef->data[ef->len] = '\0';
 
     return 0;
+}
+
+int append_bytes(EditorFile *ef, const char *s, size_t n)
+{
+    if (ef == NULL)
+    {
+        fprintf(stderr, "error: cannot append to a null editor file\n");
+        return -1;
+    }
+
+    return insert_bytes(ef, ef->len, s, n);
 }
 
 int save_file(EditorFile *ef)
@@ -374,16 +398,34 @@ void close_file(EditorFile *ef)
     free(ef);
 }
 
-int remove_byte(EditorFile *ef)
+int remove_byte_at(EditorFile *ef, size_t pos)
 {
     if (ef == NULL)
     {
-        fprintf(stderr, "error: cant found the file %s: %s", ef->path, strerror(errno));
+        fprintf(stderr, "error: cannot remove a byte from a null editor file\n");
         return -1;
     }
 
+    if (pos >= ef->len)
+    {
+        fprintf(stderr, "error: remove position is out of range\n");
+        return -1;
+    }
+
+    memmove(ef->data + pos, ef->data + pos + 1, ef->len - pos - 1);
     ef->len--;
     ef->data[ef->len] = '\0';
 
     return 0;
+}
+
+int remove_byte(EditorFile *ef)
+{
+    if (ef == NULL || ef->len == 0)
+    {
+        fprintf(stderr, "error: there is no byte to remove\n");
+        return -1;
+    }
+
+    return remove_byte_at(ef, ef->len - 1);
 }

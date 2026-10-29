@@ -17,8 +17,10 @@ typedef struct EditorFile
 
 EditorFile *open_file(const char *filename);
 int append_bytes(EditorFile *ef, const char *s, size_t n);
+int insert_bytes(EditorFile *ef, size_t pos, const char *s, size_t n);
 int save_file(EditorFile *ef);
 void close_file(EditorFile *ef);
 int remove_byte(EditorFile *ef);
+int remove_byte_at(EditorFile *ef, size_t pos);
 
 #endif
