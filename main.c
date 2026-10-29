@@ -4,6 +4,7 @@
 
 #include "fileio/fileio.h"
 #include "io/scan.h"
+#include "helpers/helper.h"
 
 int main(int argc, char **argv)
 {
@@ -50,6 +51,23 @@ int main(int argc, char **argv)
         else if (c == CTRL_D)
         {
             done = true;
+        }
+        else if (c == KEY_BACKSPACE)
+        {
+            if (ef->len == 0)
+            {
+                continue;
+            }
+
+            char removed = ef->data[ef->len - 1];
+            remove_byte(ef);
+
+            if (interactive && redraw_last_line(ef, removed == '\n') != 0)
+            {
+                perror("error: cannot redraw the line");
+                status = 1;
+                done = true;
+            }
         }
         else
         {

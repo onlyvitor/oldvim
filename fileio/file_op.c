@@ -373,3 +373,17 @@ void close_file(EditorFile *ef)
     free(ef->data);
     free(ef);
 }
+
+int remove_byte(EditorFile *ef)
+{
+    if (ef == NULL)
+    {
+        fprintf(stderr, "error: cant found the file %s: %s", ef->path, strerror(errno));
+        return -1;
+    }
+
+    ef->len--;
+    ef->data[ef->len] = '\0';
+
+    return 0;
+}

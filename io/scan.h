@@ -5,6 +5,7 @@
 #define SCAN_H
 
 #define CTRL_D 0x04
+#define KEY_BACKSPACE 0x7f
 
 #include <stdio.h>
 #include <stdlib.h>

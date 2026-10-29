@@ -8,6 +8,10 @@ int scan(void)
     {
         perror("error: cannot read the character");
     }
+    else if (c == 0x08)
+    {
+        c = KEY_BACKSPACE;
+    }
 
     return c;
 }

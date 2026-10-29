@@ -1,8 +1,8 @@
 CC := clang
 CFLAGS := -std=c17 -Wall -Wextra -Werror -g
 
-SRC := main.c io/scan.c io/input.c fileio/file_op.c
-HEADERS := io/scan.h fileio/fileio.h
+SRC := main.c io/scan.c io/input.c fileio/file_op.c helpers/main_helper.c
+HEADERS := io/scan.h fileio/fileio.h helpers/helper.h
 TARGET := oldvim
 
 INPUT := text.rst
