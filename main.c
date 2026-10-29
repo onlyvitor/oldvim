@@ -87,6 +87,94 @@ static int cursor_step_right(const EditorFile *ef, size_t *cursor, bool interact
     return 0;
 }
 
+static int cursor_step_up(const EditorFile *ef, size_t *cursor, bool interactive)
+{
+    size_t start = line_start_index(ef->data, *cursor);
+
+    if (start == 0)
+    {
+        return 0;
+    }
+
+    /* The newline that ends the previous line. */
+    size_t prev_end = start - 1;
+    size_t prev_start = line_start_index(ef->data, prev_end);
+    size_t prev_len = prev_end - prev_start;
+    size_t column = *cursor - start;
+    size_t new_column = column < prev_len ? column : prev_len;
+
+    if (interactive)
+    {
+        if (fputs("\033[A\r", stdout) == EOF)
+        {
+            return -1;
+        }
+
+        if (new_column > 0 && fprintf(stdout, "\033[%zuC", new_column) < 0)
+        {
+            return -1;
+        }
+
+        if (fflush(stdout) == EOF)
+        {
+            return -1;
+        }
+    }
+
+    *cursor = prev_start + new_column;
+    return 0;
+}
+
+static int cursor_step_down(const EditorFile *ef, size_t *cursor, bool interactive)
+{
+    size_t start = line_start_index(ef->data, *cursor);
+    size_t end = start;
+
+    while (end < ef->len && ef->data[end] != '\n')
+    {
+        end++;
+    }
+
+    if (end == ef->len)
+    {
+        /* There is no line below the last one. */
+        return 0;
+    }
+
+    size_t next_start = end + 1;
+    size_t next_end = next_start;
+
+    while (next_end < ef->len && ef->data[next_end] != '\n')
+    {
+        next_end++;
+    }
+
+    size_t next_len = next_end - next_start;
+    size_t column = *cursor - start;
+    size_t new_column = column < next_len ? column : next_len;
+
+    if (interactive)
+    {
+        if (fputs("\033[B\r", stdout) == EOF)
+        {
+            return -1;
+        }
+
+        if (new_column > 0 && fprintf(stdout, "\033[%zuC", new_column) < 0)
+        {
+            return -1;
+        }
+
+        if (fflush(stdout) == EOF)
+        {
+            return -1;
+        }
+    }
+
+    *cursor = next_start + new_column;
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2)
@@ -149,8 +237,16 @@ int main(int argc, char **argv)
         }
         else if (c == UP_ARROW || c == DOWN_ARROW)
         {
-            /* Vertical movement is not implemented yet. */
-            continue;
+            int rc = c == UP_ARROW
+                         ? cursor_step_up(ef, &cursor, interactive)
+                         : cursor_step_down(ef, &cursor, interactive);
+
+            if (rc != 0)
+            {
+                perror("error: cannot move the cursor");
+                status = 1;
+                done = true;
+            }
         }
         else if (c == KEY_BACKSPACE)
         {
