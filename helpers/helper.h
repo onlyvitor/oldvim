@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include "../fileio/fileio.h"
 
-int redraw_last_line(const EditorFile *ef, bool removed_newline);
-
 /* Index of the first byte of the line that contains pos. */
 size_t line_start_index(const char *data, size_t pos);
 

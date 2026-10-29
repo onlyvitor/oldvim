@@ -307,17 +307,6 @@ int insert_bytes(EditorFile *ef, size_t pos, const char *s, size_t n)
     return 0;
 }
 
-int append_bytes(EditorFile *ef, const char *s, size_t n)
-{
-    if (ef == NULL)
-    {
-        fprintf(stderr, "error: cannot append to a null editor file\n");
-        return -1;
-    }
-
-    return insert_bytes(ef, ef->len, s, n);
-}
-
 int save_file(EditorFile *ef)
 {
     char *tmp_path = make_temp_path(ef->path);
@@ -417,15 +406,4 @@ int remove_byte_at(EditorFile *ef, size_t pos)
     ef->data[ef->len] = '\0';
 
     return 0;
-}
-
-int remove_byte(EditorFile *ef)
-{
-    if (ef == NULL || ef->len == 0)
-    {
-        fprintf(stderr, "error: there is no byte to remove\n");
-        return -1;
-    }
-
-    return remove_byte_at(ef, ef->len - 1);
 }
