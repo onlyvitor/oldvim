@@ -52,6 +52,11 @@ int main(int argc, char **argv)
         {
             done = true;
         }
+        else if (c == LEFT_ARROW || c == RIGHT_ARROW || c == UP_ARROW || c == DOWN_ARROW)
+        {
+            /* Cursor movement is not implemented yet: just do not write it. */
+            continue;
+        }
         else if (c == KEY_BACKSPACE)
         {
             if (ef->len == 0)
