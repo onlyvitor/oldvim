@@ -3,7 +3,6 @@
 #include <unistd.h>
 
 #include "editor.h"
-#include "fileio/fileio.h"
 #include "io/scan.h"
 #include "io/screen.h"
 
@@ -15,23 +14,22 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    EditorFile *ef = open_file(argv[1]);
+    Editor *ed = editor_open(argv[1]);
 
-    if (ef == NULL)
+    if (ed == NULL)
     {
         return 1;
     }
 
     if (rawmode_on() != 0)
     {
-        close_file(ef);
+        editor_close(ed);
         return 1;
     }
 
     bool done = false;
     bool interactive = isatty(STDIN_FILENO) != 0;
     int status = 0;
-    size_t cursor = ef->len;
 
     while (!done)
     {
@@ -56,7 +54,7 @@ int main(int argc, char **argv)
         }
         else if (c == CTRL_S)
         {
-            if (save_file(ef) != 0)
+            if (save_file(ed->file) != 0)
             {
                 status = 1;
                 done = true;
@@ -68,22 +66,22 @@ int main(int argc, char **argv)
 
             if (c == LEFT_ARROW)
             {
-                motion = editor_move_left(ef, &cursor);
+                motion = editor_move_left(ed);
             }
             else if (c == RIGHT_ARROW)
             {
-                motion = editor_move_right(ef, &cursor);
+                motion = editor_move_right(ed);
             }
             else if (c == UP_ARROW)
             {
-                motion = editor_move_up(ef, &cursor);
+                motion = editor_move_up(ed);
             }
             else
             {
-                motion = editor_move_down(ef, &cursor);
+                motion = editor_move_down(ed);
             }
 
-            if (interactive && screen_apply_motion(ef, cursor, motion) != 0)
+            if (interactive && screen_apply_motion(ed->file, ed->cursor, motion) != 0)
             {
                 perror("error: cannot move the cursor");
                 status = 1;
@@ -92,23 +90,24 @@ int main(int argc, char **argv)
         }
         else if (c == KEY_BACKSPACE)
         {
-            if (cursor == 0)
+            if (ed->cursor == 0)
             {
                 continue;
             }
 
-            size_t pos = cursor - 1;
-            bool removed_newline = ef->data[pos] == '\n';
-            size_t start = line_start_index(ef->data, pos);
+            size_t pos = ed->cursor - 1;
+            bool removed_newline = ed->file->data[pos] == '\n';
+            size_t start = line_start_index(ed->file->data, pos);
 
-            if (remove_byte_at(ef, pos) != 0)
+            if (remove_byte_at(ed->file, pos) != 0)
             {
                 status = 1;
                 done = true;
             }
             else
             {
-                cursor = pos;
+                ed->cursor = pos;
+                ed->dirty = true;
 
                 if (interactive)
                 {
@@ -118,7 +117,7 @@ int main(int argc, char **argv)
                         status = 1;
                         done = true;
                     }
-                    else if (screen_redraw_from(ef, start, cursor) != 0)
+                    else if (screen_redraw_from(ed->file, start, ed->cursor) != 0)
                     {
                         perror("error: cannot redraw the line");
                         status = 1;
@@ -130,8 +129,8 @@ int main(int argc, char **argv)
         else
         {
             char byte = (char)c;
-            bool at_end = cursor == ef->len;
-            int rc = insert_bytes(ef, cursor, &byte, 1);
+            bool at_end = ed->cursor == ed->file->len;
+            int rc = insert_bytes(ed->file, ed->cursor, &byte, 1);
 
             if (rc != 0)
             {
@@ -141,7 +140,8 @@ int main(int argc, char **argv)
             }
             else
             {
-                cursor++;
+                ed->cursor++;
+                ed->dirty = true;
 
                 if (interactive)
                 {
@@ -153,7 +153,7 @@ int main(int argc, char **argv)
                     }
                     else
                     {
-                        redraw_rc = screen_redraw_from(ef, line_start_index(ef->data, cursor - 1), cursor);
+                        redraw_rc = screen_redraw_from(ed->file, line_start_index(ed->file->data, ed->cursor - 1), ed->cursor);
                     }
 
                     if (redraw_rc != 0 || screen_flush() != 0)
@@ -172,12 +172,12 @@ int main(int argc, char **argv)
         status = 1;
     }
 
-    if (status == 0 && save_file(ef) != 0)
+    if (status == 0 && save_file(ed->file) != 0)
     {
         status = 1;
     }
 
-    close_file(ef);
+    editor_close(ed);
 
     return status;
 }

@@ -1,9 +1,21 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "fileio/fileio.h"
+
+/* An open buffer plus the editing state that lives above the file. */
+typedef struct Editor
+{
+    EditorFile *file;
+    size_t cursor;
+    bool dirty;
+} Editor;
+
+Editor *editor_open(const char *path);
+void editor_close(Editor *ed);
 
 /* Index of the first byte of the line that contains pos. */
 size_t line_start_index(const char *data, size_t pos);
@@ -29,9 +41,9 @@ typedef enum CursorMotion
     CURSOR_MOTION_DOWN,
 } CursorMotion;
 
-CursorMotion editor_move_left(EditorFile *ef, size_t *cursor);
-CursorMotion editor_move_right(EditorFile *ef, size_t *cursor);
-CursorMotion editor_move_up(EditorFile *ef, size_t *cursor);
-CursorMotion editor_move_down(EditorFile *ef, size_t *cursor);
+CursorMotion editor_move_left(Editor *ed);
+CursorMotion editor_move_right(Editor *ed);
+CursorMotion editor_move_up(Editor *ed);
+CursorMotion editor_move_down(Editor *ed);
 
 #endif

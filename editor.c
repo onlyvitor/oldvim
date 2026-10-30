@@ -1,5 +1,44 @@
 #include "editor.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
+Editor *editor_open(const char *path)
+{
+    EditorFile *file = open_file(path);
+
+    if (file == NULL)
+    {
+        return NULL;
+    }
+
+    Editor *ed = malloc(sizeof *ed);
+
+    if (ed == NULL)
+    {
+        fprintf(stderr, "error: cannot allocate memory for the editor state\n");
+        close_file(file);
+        return NULL;
+    }
+
+    ed->file = file;
+    ed->cursor = file->len;
+    ed->dirty = false;
+
+    return ed;
+}
+
+void editor_close(Editor *ed)
+{
+    if (ed == NULL)
+    {
+        return;
+    }
+
+    close_file(ed->file);
+    free(ed);
+}
+
 size_t line_start_index(const char *data, size_t pos)
 {
     size_t start = pos;
@@ -47,45 +86,45 @@ void editor_row_column(const EditorFile *ef, size_t pos, size_t *row, size_t *co
     }
 }
 
-CursorMotion editor_move_left(EditorFile *ef, size_t *cursor)
+CursorMotion editor_move_left(Editor *ed)
 {
-    if (*cursor == 0)
+    if (ed->cursor == 0)
     {
         return CURSOR_MOTION_NONE;
     }
 
-    if (ef->data[*cursor - 1] == '\n')
+    if (ed->file->data[ed->cursor - 1] == '\n')
     {
         /* Jump to the end of the previous line. */
-        (*cursor)--;
+        ed->cursor--;
         return CURSOR_MOTION_PREVIOUS_LINE;
     }
 
-    (*cursor)--;
+    ed->cursor--;
     return CURSOR_MOTION_LEFT;
 }
 
-CursorMotion editor_move_right(EditorFile *ef, size_t *cursor)
+CursorMotion editor_move_right(Editor *ed)
 {
-    if (*cursor == ef->len)
+    if (ed->cursor == ed->file->len)
     {
         return CURSOR_MOTION_NONE;
     }
 
-    if (ef->data[*cursor] == '\n')
+    if (ed->file->data[ed->cursor] == '\n')
     {
         /* Jump to the beginning of the next line. */
-        (*cursor)++;
+        ed->cursor++;
         return CURSOR_MOTION_NEXT_LINE;
     }
 
-    (*cursor)++;
+    ed->cursor++;
     return CURSOR_MOTION_RIGHT;
 }
 
-CursorMotion editor_move_up(EditorFile *ef, size_t *cursor)
+CursorMotion editor_move_up(Editor *ed)
 {
-    size_t start = line_start_index(ef->data, *cursor);
+    size_t start = line_start_index(ed->file->data, ed->cursor);
 
     if (start == 0)
     {
@@ -94,32 +133,32 @@ CursorMotion editor_move_up(EditorFile *ef, size_t *cursor)
 
     /* The newline that ends the previous line. */
     size_t prev_end = start - 1;
-    size_t prev_start = line_start_index(ef->data, prev_end);
+    size_t prev_start = line_start_index(ed->file->data, prev_end);
     size_t prev_len = prev_end - prev_start;
-    size_t column = *cursor - start;
+    size_t column = ed->cursor - start;
     size_t new_column = column < prev_len ? column : prev_len;
 
-    *cursor = prev_start + new_column;
+    ed->cursor = prev_start + new_column;
     return CURSOR_MOTION_UP;
 }
 
-CursorMotion editor_move_down(EditorFile *ef, size_t *cursor)
+CursorMotion editor_move_down(Editor *ed)
 {
-    size_t start = line_start_index(ef->data, *cursor);
-    size_t end = line_end_index(ef->data, ef->len, start);
+    size_t start = line_start_index(ed->file->data, ed->cursor);
+    size_t end = line_end_index(ed->file->data, ed->file->len, start);
 
-    if (end == ef->len)
+    if (end == ed->file->len)
     {
         /* There is no line below the last one. */
         return CURSOR_MOTION_NONE;
     }
 
     size_t next_start = end + 1;
-    size_t next_end = line_end_index(ef->data, ef->len, next_start);
+    size_t next_end = line_end_index(ed->file->data, ed->file->len, next_start);
     size_t next_len = next_end - next_start;
-    size_t column = *cursor - start;
+    size_t column = ed->cursor - start;
     size_t new_column = column < next_len ? column : next_len;
 
-    *cursor = next_start + new_column;
+    ed->cursor = next_start + new_column;
     return CURSOR_MOTION_DOWN;
 }
