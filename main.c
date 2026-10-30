@@ -5,6 +5,7 @@
 #include "editor.h"
 #include "io/scan.h"
 #include "io/screen.h"
+#include "terminal/terminal.h"
 
 int main(int argc, char **argv)
 {

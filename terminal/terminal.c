@@ -1,6 +1,13 @@
-#include "scan.h"
+/* Feature-test macro: must be defined before any system header. */
+#define _POSIX_C_SOURCE 200809L
+
+#include "terminal.h"
 
 #include <signal.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <termios.h>
+#include <unistd.h>
 
 static struct termios saved_termios;
 static volatile sig_atomic_t rawmode_enabled = 0;

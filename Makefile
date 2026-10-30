@@ -4,8 +4,8 @@ DEBUG_FLAGS := -g
 RELEASE_FLAGS := -O2
 SANITIZE_FLAGS := -g -fsanitize=address,undefined
 
-SRC := $(wildcard *.c) $(wildcard io/*.c) $(wildcard fileio/*.c)
-HEADERS := $(wildcard *.h) $(wildcard io/*.h) $(wildcard fileio/*.h)
+SRC := $(wildcard *.c) $(wildcard io/*.c) $(wildcard fileio/*.c) $(wildcard terminal/*.c)
+HEADERS := $(wildcard *.h) $(wildcard io/*.h) $(wildcard fileio/*.h) $(wildcard terminal/*.h)
 UNIT_SRC := tests/unit_test.c editor.c fileio/file_op.c
 UNIT_BIN := tests/unit_tests
 TARGET := oldvim
