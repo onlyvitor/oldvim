@@ -4,6 +4,7 @@
 
 #include "fileio/fileio.h"
 #include "io/scan.h"
+#include "io/screen.h"
 #include "helpers/helper.h"
 
 static int cursor_step_left(const EditorFile *ef, size_t *cursor, bool interactive)
@@ -19,22 +20,11 @@ static int cursor_step_left(const EditorFile *ef, size_t *cursor, bool interacti
         size_t prev_end = *cursor - 1;
         size_t prev_len = prev_end - line_start_index(ef->data, prev_end);
 
-        if (interactive)
+        if (interactive &&
+            (screen_move_up(1) != 0 || screen_carriage_return() != 0 ||
+             screen_goto_column(prev_len) != 0 || screen_flush() != 0))
         {
-            if (fputs("\033[A\r", stdout) == EOF)
-            {
-                return -1;
-            }
-
-            if (prev_len > 0 && fprintf(stdout, "\033[%zuC", prev_len) < 0)
-            {
-                return -1;
-            }
-
-            if (fflush(stdout) == EOF)
-            {
-                return -1;
-            }
+            return -1;
         }
 
         *cursor = prev_end;
@@ -43,7 +33,7 @@ static int cursor_step_left(const EditorFile *ef, size_t *cursor, bool interacti
 
     if (interactive)
     {
-        if (fputs("\033[D", stdout) == EOF || fflush(stdout) == EOF)
+        if (screen_move_left(1) != 0 || screen_flush() != 0)
         {
             return -1;
         }
@@ -65,7 +55,7 @@ static int cursor_step_right(const EditorFile *ef, size_t *cursor, bool interact
         /* Jump to the beginning of the next line. */
         if (interactive)
         {
-            if (fputs("\r\n", stdout) == EOF || fflush(stdout) == EOF)
+            if (screen_puts("\r\n") != 0 || screen_flush() != 0)
             {
                 return -1;
             }
@@ -77,7 +67,7 @@ static int cursor_step_right(const EditorFile *ef, size_t *cursor, bool interact
 
     if (interactive)
     {
-        if (fputs("\033[C", stdout) == EOF || fflush(stdout) == EOF)
+        if (screen_goto_column(1) != 0 || screen_flush() != 0)
         {
             return -1;
         }
@@ -103,22 +93,11 @@ static int cursor_step_up(const EditorFile *ef, size_t *cursor, bool interactive
     size_t column = *cursor - start;
     size_t new_column = column < prev_len ? column : prev_len;
 
-    if (interactive)
+    if (interactive &&
+        (screen_move_up(1) != 0 || screen_carriage_return() != 0 ||
+         screen_goto_column(new_column) != 0 || screen_flush() != 0))
     {
-        if (fputs("\033[A\r", stdout) == EOF)
-        {
-            return -1;
-        }
-
-        if (new_column > 0 && fprintf(stdout, "\033[%zuC", new_column) < 0)
-        {
-            return -1;
-        }
-
-        if (fflush(stdout) == EOF)
-        {
-            return -1;
-        }
+        return -1;
     }
     *cursor = prev_start + new_column;
     return 0;
@@ -152,22 +131,11 @@ static int cursor_step_down(const EditorFile *ef, size_t *cursor, bool interacti
     size_t column = *cursor - start;
     size_t new_column = column < next_len ? column : next_len;
 
-    if (interactive)
+    if (interactive &&
+        (screen_move_down(1) != 0 || screen_carriage_return() != 0 ||
+         screen_goto_column(new_column) != 0 || screen_flush() != 0))
     {
-        if (fputs("\033[B\r", stdout) == EOF)
-        {
-            return -1;
-        }
-
-        if (new_column > 0 && fprintf(stdout, "\033[%zuC", new_column) < 0)
-        {
-            return -1;
-        }
-
-        if (fflush(stdout) == EOF)
-        {
-            return -1;
-        }
+        return -1;
     }
 
     *cursor = next_start + new_column;
@@ -277,7 +245,7 @@ int main(int argc, char **argv)
 
                 if (interactive)
                 {
-                    if (removed_newline && fputs("\033[A", stdout) == EOF)
+                    if (removed_newline && screen_move_up(1) != 0)
                     {
                         perror("error: cannot move the cursor");
                         status = 1;
@@ -314,14 +282,14 @@ int main(int argc, char **argv)
 
                     if (at_end)
                     {
-                        redraw_rc = putchar(c) == EOF ? -1 : 0;
+                        redraw_rc = screen_putc((char)c);
                     }
                     else
                     {
                         redraw_rc = redraw_from(ef, line_start_index(ef->data, cursor - 1), cursor);
                     }
 
-                    if (redraw_rc != 0 || fflush(stdout) == EOF)
+                    if (redraw_rc != 0 || screen_flush() != 0)
                     {
                         perror("error: cannot show the character");
                         status = 1;

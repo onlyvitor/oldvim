@@ -1,5 +1,7 @@
 #include "helper.h"
 
+#include "../io/screen.h"
+
 size_t line_start_index(const char *data, size_t pos)
 {
     size_t start = pos;
@@ -15,14 +17,12 @@ size_t line_start_index(const char *data, size_t pos)
 int redraw_from(const EditorFile *ef, size_t start, size_t cursor)
 {
     /* Move to the beginning of the line and erase everything below it. */
-    if (fputs("\r\033[J", stdout) == EOF)
+    if (screen_carriage_return() != 0 || screen_erase_below() != 0)
     {
         return -1;
     }
 
-    size_t n = ef->len - start;
-
-    if (n > 0 && fwrite(ef->data + start, 1, n, stdout) != n)
+    if (screen_write(ef->data + start, ef->len - start) != 0)
     {
         return -1;
     }
@@ -38,12 +38,7 @@ int redraw_from(const EditorFile *ef, size_t start, size_t cursor)
         }
     }
 
-    if (rows > 0 && fprintf(stdout, "\033[%zuA", rows) < 0)
-    {
-        return -1;
-    }
-
-    if (fputc('\r', stdout) == EOF)
+    if (screen_move_up(rows) != 0 || screen_carriage_return() != 0)
     {
         return -1;
     }
@@ -51,10 +46,10 @@ int redraw_from(const EditorFile *ef, size_t start, size_t cursor)
     /* Move right to the column where the cursor lives. */
     size_t column = cursor - line_start_index(ef->data, cursor);
 
-    if (column > 0 && fprintf(stdout, "\033[%zuC", column) < 0)
+    if (screen_goto_column(column) != 0)
     {
         return -1;
     }
 
-    return fflush(stdout) == EOF ? -1 : 0;
+    return screen_flush();
 }
