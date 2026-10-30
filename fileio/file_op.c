@@ -253,6 +253,18 @@ static EditorFile *make_editor_file(const char *filename, char *content, size_t 
     ef->data = content;
     ef->len = len;
     ef->cap = initial_capacity(len);
+
+    char *grown = realloc(content, ef->cap);
+
+    if (grown != NULL)
+    {
+        ef->data = grown;
+    }
+    else
+    {
+        /* Keep the smaller allocation; insert_bytes will grow it later. */
+        ef->cap = len + 1;
+    }
     ef->mode = exist ? (st->st_mode & PERMISSION_MASK) : DEFAULT_FILE_MODE;
     ef->exist = exist;
 
