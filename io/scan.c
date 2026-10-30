@@ -8,15 +8,15 @@ int scan(void)
     {
         perror("error: cannot read the character");
     }
-    else if (c == 0x13)
+    else if (c == CTRL_S)
     {
         c = CTRL_S;
     }
-    else if (c == 0x08)
+    else if (c == CTRL_H)
     {
         c = KEY_BACKSPACE;
     }
-    else if (c == 27)
+    else if (c == ESC)
     {
         int segment1 = getchar();
 

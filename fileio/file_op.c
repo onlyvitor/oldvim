@@ -12,6 +12,13 @@
 
 #include "fileio.h"
 
+/* Keep only the permission bits of the original file. */
+#define PERMISSION_MASK 07777
+#define DEFAULT_FILE_MODE 0644
+
+/* Smallest allocation for a buffer that started empty. */
+#define MIN_BUFFER_CAPACITY 64
+
 static char *dup_string(const char *s)
 {
     size_t len = strlen(s) + 1;
@@ -237,7 +244,7 @@ static EditorFile *make_editor_file(const char *filename, char *content, size_t 
     ef->data = content;
     ef->len = len;
     ef->cap = len + 1;
-    ef->mode = exist ? (st->st_mode & 07777) : 0644;
+    ef->mode = exist ? (st->st_mode & PERMISSION_MASK) : DEFAULT_FILE_MODE;
     ef->exist = exist;
 
     return ef;
@@ -298,7 +305,7 @@ int insert_bytes(EditorFile *ef, size_t pos, const char *s, size_t n)
 
     if (needed > ef->cap)
     {
-        size_t cap = ef->cap > 0 ? ef->cap : 64;
+        size_t cap = ef->cap > 0 ? ef->cap : MIN_BUFFER_CAPACITY;
 
         while (cap < needed)
         {
