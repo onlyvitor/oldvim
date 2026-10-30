@@ -27,15 +27,14 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    bool done = false;
     bool interactive = isatty(STDIN_FILENO) != 0;
     int status = 0;
 
-    while (!done)
+    for (;;)
     {
-        int c = scan();
+        int key = scan();
 
-        if (c == EOF)
+        if (key == EOF)
         {
             if (ferror(stdin))
             {
@@ -46,124 +45,28 @@ int main(int argc, char **argv)
                 printf("\n[EOF]\n");
             }
 
-            done = true;
+            break;
         }
-        else if (c == CTRL_D)
+
+        EditorChange change;
+        EditorAction action = editor_handle_key(ed, key, &change);
+
+        if (action == ACTION_QUIT)
         {
-            done = true;
+            break;
         }
-        else if (c == CTRL_S)
+
+        if (action == ACTION_ERROR)
         {
-            if (save_file(ed->file) != 0)
-            {
-                status = 1;
-                done = true;
-            }
+            status = 1;
+            break;
         }
-        else if (c == LEFT_ARROW || c == RIGHT_ARROW || c == UP_ARROW || c == DOWN_ARROW)
+
+        if (interactive && screen_apply_change(ed, &change) != 0)
         {
-            CursorMotion motion;
-
-            if (c == LEFT_ARROW)
-            {
-                motion = editor_move_left(ed);
-            }
-            else if (c == RIGHT_ARROW)
-            {
-                motion = editor_move_right(ed);
-            }
-            else if (c == UP_ARROW)
-            {
-                motion = editor_move_up(ed);
-            }
-            else
-            {
-                motion = editor_move_down(ed);
-            }
-
-            if (interactive && screen_apply_motion(ed->file, ed->cursor, motion) != 0)
-            {
-                perror("error: cannot move the cursor");
-                status = 1;
-                done = true;
-            }
-        }
-        else if (c == KEY_BACKSPACE)
-        {
-            if (ed->cursor == 0)
-            {
-                continue;
-            }
-
-            size_t pos = ed->cursor - 1;
-            bool removed_newline = ed->file->data[pos] == '\n';
-            size_t start = line_start_index(ed->file->data, pos);
-
-            if (remove_byte_at(ed->file, pos) != 0)
-            {
-                status = 1;
-                done = true;
-            }
-            else
-            {
-                ed->cursor = pos;
-                ed->dirty = true;
-
-                if (interactive)
-                {
-                    if (removed_newline && screen_move_up(1) != 0)
-                    {
-                        perror("error: cannot move the cursor");
-                        status = 1;
-                        done = true;
-                    }
-                    else if (screen_redraw_from(ed->file, start, ed->cursor) != 0)
-                    {
-                        perror("error: cannot redraw the line");
-                        status = 1;
-                        done = true;
-                    }
-                }
-            }
-        }
-        else
-        {
-            char byte = (char)c;
-            bool at_end = ed->cursor == ed->file->len;
-            int rc = insert_bytes(ed->file, ed->cursor, &byte, 1);
-
-            if (rc != 0)
-            {
-                fprintf(stderr, "error: cannot insert the character (code %d)\n", rc);
-                status = 1;
-                done = true;
-            }
-            else
-            {
-                ed->cursor++;
-                ed->dirty = true;
-
-                if (interactive)
-                {
-                    int redraw_rc;
-
-                    if (at_end)
-                    {
-                        redraw_rc = screen_putc((char)c);
-                    }
-                    else
-                    {
-                        redraw_rc = screen_redraw_from(ed->file, line_start_index(ed->file->data, ed->cursor - 1), ed->cursor);
-                    }
-
-                    if (redraw_rc != 0 || screen_flush() != 0)
-                    {
-                        perror("error: cannot show the character");
-                        status = 1;
-                        done = true;
-                    }
-                }
-            }
+            perror("error: cannot draw the change");
+            status = 1;
+            break;
         }
     }
 

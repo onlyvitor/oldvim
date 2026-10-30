@@ -162,3 +162,94 @@ CursorMotion editor_move_down(Editor *ed)
     ed->cursor = next_start + new_column;
     return CURSOR_MOTION_DOWN;
 }
+
+EditorAction editor_handle_key(Editor *ed, int key, EditorChange *change)
+{
+    change->kind = CHANGE_NONE;
+
+    if (key == CTRL_D)
+    {
+        return ACTION_QUIT;
+    }
+
+    if (key == CTRL_S)
+    {
+        if (save_file(ed->file) != 0)
+        {
+            return ACTION_ERROR;
+        }
+
+        ed->dirty = false;
+        return ACTION_CONTINUE;
+    }
+
+    if (key == LEFT_ARROW || key == RIGHT_ARROW || key == UP_ARROW || key == DOWN_ARROW)
+    {
+        CursorMotion motion;
+
+        if (key == LEFT_ARROW)
+        {
+            motion = editor_move_left(ed);
+        }
+        else if (key == RIGHT_ARROW)
+        {
+            motion = editor_move_right(ed);
+        }
+        else if (key == UP_ARROW)
+        {
+            motion = editor_move_up(ed);
+        }
+        else
+        {
+            motion = editor_move_down(ed);
+        }
+
+        change->kind = CHANGE_CURSOR;
+        change->motion = motion;
+        return ACTION_CONTINUE;
+    }
+
+    if (key == KEY_BACKSPACE)
+    {
+        if (ed->cursor == 0)
+        {
+            return ACTION_CONTINUE;
+        }
+
+        size_t pos = ed->cursor - 1;
+        bool removed_newline = ed->file->data[pos] == '\n';
+        size_t start = line_start_index(ed->file->data, pos);
+
+        if (remove_byte_at(ed->file, pos) != 0)
+        {
+            return ACTION_ERROR;
+        }
+
+        ed->cursor = pos;
+        ed->dirty = true;
+
+        change->kind = CHANGE_LINE;
+        change->start = start;
+        change->removed_newline = removed_newline;
+        return ACTION_CONTINUE;
+    }
+
+    char byte = (char)key;
+    bool at_end = ed->cursor == ed->file->len;
+    size_t start = line_start_index(ed->file->data, ed->cursor);
+
+    if (insert_bytes(ed->file, ed->cursor, &byte, 1) != 0)
+    {
+        return ACTION_ERROR;
+    }
+
+    ed->cursor++;
+    ed->dirty = true;
+
+    change->kind = at_end ? CHANGE_APPEND : CHANGE_LINE;
+    change->start = start;
+    change->removed_newline = false;
+    change->byte = byte;
+
+    return ACTION_CONTINUE;
+}

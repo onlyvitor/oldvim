@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 #include "fileio/fileio.h"
+#include "key.h"
 
 /* An open buffer plus the editing state that lives above the file. */
 typedef struct Editor
@@ -45,5 +46,34 @@ CursorMotion editor_move_left(Editor *ed);
 CursorMotion editor_move_right(Editor *ed);
 CursorMotion editor_move_up(Editor *ed);
 CursorMotion editor_move_down(Editor *ed);
+
+/* What the caller has to do after a key was handled. */
+typedef enum EditorAction
+{
+    ACTION_CONTINUE,
+    ACTION_QUIT,
+    ACTION_ERROR,
+} EditorAction;
+
+/* The part of the buffer that has to be repainted after a change. */
+typedef enum ChangeKind
+{
+    CHANGE_NONE,
+    CHANGE_CURSOR,
+    CHANGE_LINE,
+    CHANGE_APPEND,
+} ChangeKind;
+
+typedef struct EditorChange
+{
+    ChangeKind kind;
+    CursorMotion motion; /* CHANGE_CURSOR */
+    size_t start;        /* CHANGE_LINE: first byte of the line */
+    bool removed_newline; /* CHANGE_LINE: the cursor moved up a row */
+    char byte;           /* CHANGE_APPEND */
+} EditorChange;
+
+/* Apply one decoded key to the editor and describe what to repaint. */
+EditorAction editor_handle_key(Editor *ed, int key, EditorChange *change);
 
 #endif

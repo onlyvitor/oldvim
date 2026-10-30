@@ -29,4 +29,7 @@ int screen_apply_motion(const EditorFile *ef, size_t cursor, CursorMotion motion
 /* Redraw from the start of a line and put the cursor back at cursor. */
 int screen_redraw_from(const EditorFile *ef, size_t start, size_t cursor);
 
+/* Repaint whatever editor_handle_key reported. */
+int screen_apply_change(const Editor *ed, const EditorChange *change);
+
 #endif

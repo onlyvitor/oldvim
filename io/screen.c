@@ -165,3 +165,32 @@ int screen_redraw_from(const EditorFile *ef, size_t start, size_t cursor)
 
     return screen_flush();
 }
+
+int screen_apply_change(const Editor *ed, const EditorChange *change)
+{
+    int rc = 0;
+
+    switch (change->kind)
+    {
+    case CHANGE_NONE:
+        return 0;
+    case CHANGE_CURSOR:
+        return screen_apply_motion(ed->file, ed->cursor, change->motion);
+    case CHANGE_LINE:
+        if (change->removed_newline)
+        {
+            rc = screen_move_up(1);
+        }
+
+        if (rc == 0)
+        {
+            rc = screen_redraw_from(ed->file, change->start, ed->cursor);
+        }
+
+        return rc;
+    case CHANGE_APPEND:
+        return screen_putc(change->byte) != 0 || screen_flush() != 0 ? -1 : 0;
+    }
+
+    return -1;
+}
