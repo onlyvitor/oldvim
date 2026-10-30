@@ -108,115 +108,113 @@ static void fsync_parent_dir(const char *path)
     free(copy);
 }
 
-EditorFile *open_file(const char *filename)
+/* Read the whole file into a NUL-terminated buffer and print it to stdout. */
+static int load_content(const char *filename, bool exist, char **out_data, size_t *out_len)
 {
-    struct stat st;
-    bool exist = false;
-
-    if (stat(filename, &st) == 0)
-    {
-        exist = true;
-    }
-    else if (errno != ENOENT)
-    {
-        fprintf(stderr, "error: cannot stat %s: %s\n", filename, strerror(errno));
-        return NULL;
-    }
-
     char *content = NULL;
-    size_t content_len = 0;
 
-    if (exist)
-    {
-        FILE *fp = fopen(filename, "rb");
-
-        if (fp == NULL)
-        {
-            fprintf(stderr, "error: cannot open %s: %s\n", filename, strerror(errno));
-            return NULL;
-        }
-
-        if (fseek(fp, 0, SEEK_END) != 0)
-        {
-            perror("error: cannot seek to the end of the file");
-            fclose(fp);
-            return NULL;
-        }
-
-        long file_end = ftell(fp);
-
-        if (file_end < 0)
-        {
-            perror("error: cannot get the file size");
-            fclose(fp);
-            return NULL;
-        }
-
-        if (fseek(fp, 0, SEEK_SET) != 0)
-        {
-            perror("error: cannot seek to the start of the file");
-            fclose(fp);
-            return NULL;
-        }
-
-        size_t file_size = (size_t)file_end;
-
-        content = malloc(file_size + 1);
-
-        if (content == NULL)
-        {
-            fprintf(stderr, "error: cannot allocate memory for the file content\n");
-            fclose(fp);
-            return NULL;
-        }
-
-        size_t read_bytes = fread(content, 1, file_size, fp);
-
-        if (read_bytes != file_size)
-        {
-            if (ferror(fp))
-            {
-                perror("error: cannot read the file");
-            }
-            else
-            {
-                fprintf(stderr, "error: unexpected end of file\n");
-            }
-
-            free(content);
-            fclose(fp);
-            return NULL;
-        }
-
-        if (fclose(fp) != 0)
-        {
-            perror("error: cannot close the file");
-            free(content);
-            return NULL;
-        }
-
-        content_len = read_bytes;
-
-        if (fwrite(content, 1, read_bytes, stdout) != read_bytes)
-        {
-            perror("error: cannot write the content to the stdout");
-            free(content);
-            return NULL;
-        }
-    }
-    else
+    if (!exist)
     {
         content = malloc(1);
 
         if (content == NULL)
         {
             fprintf(stderr, "error: cannot allocate memory for the file content\n");
-            return NULL;
+            return -1;
         }
+
+        content[0] = '\0';
+        *out_data = content;
+        *out_len = 0;
+        return 0;
     }
 
-    content[content_len] = '\0';
+    FILE *fp = fopen(filename, "rb");
 
+    if (fp == NULL)
+    {
+        fprintf(stderr, "error: cannot open %s: %s\n", filename, strerror(errno));
+        return -1;
+    }
+
+    if (fseek(fp, 0, SEEK_END) != 0)
+    {
+        perror("error: cannot seek to the end of the file");
+        fclose(fp);
+        return -1;
+    }
+
+    long file_end = ftell(fp);
+
+    if (file_end < 0)
+    {
+        perror("error: cannot get the file size");
+        fclose(fp);
+        return -1;
+    }
+
+    if (fseek(fp, 0, SEEK_SET) != 0)
+    {
+        perror("error: cannot seek to the start of the file");
+        fclose(fp);
+        return -1;
+    }
+
+    size_t file_size = (size_t)file_end;
+
+    content = malloc(file_size + 1);
+
+    if (content == NULL)
+    {
+        fprintf(stderr, "error: cannot allocate memory for the file content\n");
+        fclose(fp);
+        return -1;
+    }
+
+    size_t read_bytes = fread(content, 1, file_size, fp);
+
+    if (read_bytes != file_size)
+    {
+        if (ferror(fp))
+        {
+            perror("error: cannot read the file");
+        }
+        else
+        {
+            fprintf(stderr, "error: unexpected end of file\n");
+        }
+
+        free(content);
+        fclose(fp);
+        return -1;
+    }
+
+    if (fclose(fp) != 0)
+    {
+        perror("error: cannot close the file");
+        free(content);
+        return -1;
+    }
+
+    content[read_bytes] = '\0';
+
+    if (fwrite(content, 1, read_bytes, stdout) != read_bytes)
+    {
+        perror("error: cannot write the content to the stdout");
+        free(content);
+        return -1;
+    }
+
+    *out_data = content;
+    *out_len = read_bytes;
+
+    return 0;
+}
+
+/* Take ownership of content on success and of nothing on failure. */
+static EditorFile *make_editor_file(const char *filename, char *content, size_t len,
+                                    const struct stat *st, bool exist)
+{
     EditorFile *ef = malloc(sizeof *ef);
 
     if (ef == NULL)
@@ -237,12 +235,38 @@ EditorFile *open_file(const char *filename)
     }
 
     ef->data = content;
-    ef->len = content_len;
-    ef->cap = content_len + 1;
-    ef->mode = exist ? (st.st_mode & 07777) : 0644;
+    ef->len = len;
+    ef->cap = len + 1;
+    ef->mode = exist ? (st->st_mode & 07777) : 0644;
     ef->exist = exist;
 
     return ef;
+}
+
+EditorFile *open_file(const char *filename)
+{
+    struct stat st;
+    bool exist = false;
+
+    if (stat(filename, &st) == 0)
+    {
+        exist = true;
+    }
+    else if (errno != ENOENT)
+    {
+        fprintf(stderr, "error: cannot stat %s: %s\n", filename, strerror(errno));
+        return NULL;
+    }
+
+    char *content = NULL;
+    size_t content_len = 0;
+
+    if (load_content(filename, exist, &content, &content_len) != 0)
+    {
+        return NULL;
+    }
+
+    return make_editor_file(filename, content, content_len, &st, exist);
 }
 
 int insert_bytes(EditorFile *ef, size_t pos, const char *s, size_t n)
@@ -307,22 +331,14 @@ int insert_bytes(EditorFile *ef, size_t pos, const char *s, size_t n)
     return 0;
 }
 
-int save_file(EditorFile *ef)
+/* Create tmp_path and fill it with the buffer, syncing it to disk. */
+static int write_temp_file(const EditorFile *ef, char *tmp_path)
 {
-    char *tmp_path = make_temp_path(ef->path);
-
-    if (tmp_path == NULL)
-    {
-        fprintf(stderr, "error: cannot allocate memory for the temporary path\n");
-        return -1;
-    }
-
     int fd = mkstemp(tmp_path);
 
     if (fd < 0)
     {
         fprintf(stderr, "error: cannot create %s: %s\n", tmp_path, strerror(errno));
-        free(tmp_path);
         return -1;
     }
 
@@ -352,21 +368,40 @@ int save_file(EditorFile *ef)
         ok = false;
     }
 
-    if (ok && rename(tmp_path, ef->path) != 0)
+    return ok ? 0 : -1;
+}
+
+/* Atomically put the temporary file in place of the edited file. */
+static int replace_file(const char *tmp_path, const char *path)
+{
+    if (rename(tmp_path, path) != 0)
     {
-        fprintf(stderr, "error: cannot replace %s: %s\n", ef->path, strerror(errno));
-        ok = false;
+        fprintf(stderr, "error: cannot replace %s: %s\n", path, strerror(errno));
+        return -1;
     }
 
-    if (!ok)
+    fsync_parent_dir(path);
+
+    return 0;
+}
+
+int save_file(EditorFile *ef)
+{
+    char *tmp_path = make_temp_path(ef->path);
+
+    if (tmp_path == NULL)
+    {
+        fprintf(stderr, "error: cannot allocate memory for the temporary path\n");
+        return -1;
+    }
+
+    if (write_temp_file(ef, tmp_path) != 0 || replace_file(tmp_path, ef->path) != 0)
     {
         /* Keep the temporary file so the edited content is not lost. */
         fprintf(stderr, "error: the edited content was kept in %s\n", tmp_path);
         free(tmp_path);
         return -1;
     }
-
-    fsync_parent_dir(ef->path);
 
     free(tmp_path);
 
