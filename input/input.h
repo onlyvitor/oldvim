@@ -1,5 +1,5 @@
-#ifndef SCAN_H
-#define SCAN_H
+#ifndef INPUT_H
+#define INPUT_H
 
 #include "key.h"
 

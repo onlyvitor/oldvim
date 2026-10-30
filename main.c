@@ -3,8 +3,8 @@
 #include <unistd.h>
 
 #include "editor.h"
-#include "io/scan.h"
-#include "io/screen.h"
+#include "input/input.h"
+#include "output/output.h"
 #include "terminal/terminal.h"
 
 int main(int argc, char **argv)

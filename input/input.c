@@ -1,4 +1,4 @@
-#include "scan.h"
+#include "input.h"
 
 int scan(void)
 {
