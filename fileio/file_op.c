@@ -19,6 +19,22 @@
 /* Smallest allocation for a buffer that started empty. */
 #define MIN_BUFFER_CAPACITY 64
 
+/* Leave room so the first edits do not reallocate the whole buffer. */
+static size_t initial_capacity(size_t len)
+{
+    if (len < MIN_BUFFER_CAPACITY)
+    {
+        return MIN_BUFFER_CAPACITY;
+    }
+
+    if (len > (SIZE_MAX - 1) / 2)
+    {
+        return len + 1;
+    }
+
+    return len + len / 2 + 1;
+}
+
 static char *dup_string(const char *s)
 {
     size_t len = strlen(s) + 1;
@@ -243,7 +259,7 @@ static EditorFile *make_editor_file(const char *filename, char *content, size_t 
 
     ef->data = content;
     ef->len = len;
-    ef->cap = len + 1;
+    ef->cap = initial_capacity(len);
     ef->mode = exist ? (st->st_mode & PERMISSION_MASK) : DEFAULT_FILE_MODE;
     ef->exist = exist;
 
