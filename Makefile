@@ -6,11 +6,13 @@ SANITIZE_FLAGS := -g -fsanitize=address,undefined
 
 SRC := $(wildcard *.c) $(wildcard io/*.c) $(wildcard fileio/*.c)
 HEADERS := $(wildcard *.h) $(wildcard io/*.h) $(wildcard fileio/*.h)
+UNIT_SRC := tests/unit_test.c editor.c fileio/file_op.c
+UNIT_BIN := tests/unit_tests
 TARGET := oldvim
 
 INPUT := text.rst
 
-.PHONY: all clean run test test-sanitize debug release
+.PHONY: all clean run test test-unit test-sanitize debug release
 
 all: $(TARGET)
 
@@ -26,12 +28,20 @@ release: $(SRC) $(HEADERS)
 run: $(TARGET)
 	./$(TARGET) $(INPUT)
 
-test: $(TARGET)
+$(UNIT_BIN): $(UNIT_SRC) $(HEADERS)
+	$(CC) $(CFLAGS) $(DEBUG_FLAGS) $(UNIT_SRC) -o $@
+
+test-unit: $(UNIT_BIN)
+	./$(UNIT_BIN)
+
+test: test-unit $(TARGET)
 	python3 tests/test_editor.py
 
 test-sanitize:
 	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) $(SRC) -o $(TARGET)
+	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) $(UNIT_SRC) -o $(UNIT_BIN)
+	./$(UNIT_BIN)
 	python3 tests/test_editor.py
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(UNIT_BIN)

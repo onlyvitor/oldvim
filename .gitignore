@@ -2,3 +2,4 @@ oldvim
 .vscode
 *.tmp.*
 text.rst
+tests/unit_tests
