@@ -61,6 +61,10 @@ int rawmode_on(void)
     // disable line buffering and automatic echo
     raw.c_lflag &= ~(ICANON | ECHO);
 
+    // disable software flow control so ^S reaches the editor instead of
+    // stopping the terminal output
+    raw.c_iflag &= ~(IXON | IXOFF | IXANY);
+
     // read one byte at a time, without a timeout
     raw.c_cc[VMIN] = 1;
     raw.c_cc[VTIME] = 0;

@@ -120,7 +120,6 @@ static int cursor_step_up(const EditorFile *ef, size_t *cursor, bool interactive
             return -1;
         }
     }
-
     *cursor = prev_start + new_column;
     return 0;
 }
@@ -221,6 +220,14 @@ int main(int argc, char **argv)
         else if (c == CTRL_D)
         {
             done = true;
+        }
+        else if (c == CTRL_S)
+        {
+            if (save_file(ef) != 0)
+            {
+                status = 1;
+                done = true;
+            }
         }
         else if (c == LEFT_ARROW || c == RIGHT_ARROW)
         {
