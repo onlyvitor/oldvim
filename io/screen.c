@@ -57,6 +57,11 @@ int screen_move_left(size_t columns)
     return fprintf(stdout, "\033[%zuD", columns) < 0 ? -1 : 0;
 }
 
+int screen_move_right(size_t columns)
+{
+    return screen_goto_column(columns);
+}
+
 int screen_move_up(size_t rows)
 {
     if (rows == 0)
@@ -75,4 +80,88 @@ int screen_move_down(size_t rows)
     }
 
     return fprintf(stdout, "\033[%zuB", rows) < 0 ? -1 : 0;
+}
+
+static size_t cursor_column(const EditorFile *ef, size_t cursor)
+{
+    size_t column = 0;
+
+    editor_row_column(ef, cursor, NULL, &column);
+
+    return column;
+}
+
+int screen_apply_motion(const EditorFile *ef, size_t cursor, CursorMotion motion)
+{
+    switch (motion)
+    {
+    case CURSOR_MOTION_NONE:
+        return 0;
+    case CURSOR_MOTION_LEFT:
+        return screen_move_left(1) != 0 || screen_flush() != 0 ? -1 : 0;
+    case CURSOR_MOTION_RIGHT:
+        return screen_move_right(1) != 0 || screen_flush() != 0 ? -1 : 0;
+    case CURSOR_MOTION_NEXT_LINE:
+        return screen_puts("\r\n") != 0 || screen_flush() != 0 ? -1 : 0;
+    case CURSOR_MOTION_PREVIOUS_LINE:
+        return screen_move_up(1) != 0 || screen_carriage_return() != 0 ||
+                       screen_goto_column(cursor_column(ef, cursor)) != 0 ||
+                       screen_flush() != 0
+                   ? -1
+                   : 0;
+    case CURSOR_MOTION_UP:
+        return screen_move_up(1) != 0 || screen_carriage_return() != 0 ||
+                       screen_goto_column(cursor_column(ef, cursor)) != 0 ||
+                       screen_flush() != 0
+                   ? -1
+                   : 0;
+    case CURSOR_MOTION_DOWN:
+        return screen_move_down(1) != 0 || screen_carriage_return() != 0 ||
+                       screen_goto_column(cursor_column(ef, cursor)) != 0 ||
+                       screen_flush() != 0
+                   ? -1
+                   : 0;
+    }
+
+    return -1;
+}
+
+int screen_redraw_from(const EditorFile *ef, size_t start, size_t cursor)
+{
+    /* Move to the beginning of the line and erase everything below it. */
+    if (screen_carriage_return() != 0 || screen_erase_below() != 0)
+    {
+        return -1;
+    }
+
+    if (screen_write(ef->data + start, ef->len - start) != 0)
+    {
+        return -1;
+    }
+
+    /* Count how many lines were printed after the cursor. */
+    size_t rows = 0;
+
+    for (size_t i = cursor; i < ef->len; i++)
+    {
+        if (ef->data[i] == '\n')
+        {
+            rows++;
+        }
+    }
+
+    if (screen_move_up(rows) != 0 || screen_carriage_return() != 0)
+    {
+        return -1;
+    }
+
+    /* Move right to the column where the cursor lives. */
+    size_t column = cursor - line_start_index(ef->data, cursor);
+
+    if (screen_goto_column(column) != 0)
+    {
+        return -1;
+    }
+
+    return screen_flush();
 }
