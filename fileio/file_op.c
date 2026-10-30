@@ -146,7 +146,7 @@ static int load_content(const char *filename, bool exist, char **out_data, size_
 
     if (fseek(fp, 0, SEEK_END) != 0)
     {
-        perror("error: cannot seek to the end of the file");
+        fprintf(stderr, "error: cannot seek to the end of the file\n");
         fclose(fp);
         return -1;
     }
@@ -155,14 +155,14 @@ static int load_content(const char *filename, bool exist, char **out_data, size_
 
     if (file_end < 0)
     {
-        perror("error: cannot get the file size");
+        fprintf(stderr, "error: cannot get the file size\n");
         fclose(fp);
         return -1;
     }
 
     if (fseek(fp, 0, SEEK_SET) != 0)
     {
-        perror("error: cannot seek to the start of the file");
+        fprintf(stderr, "error: cannot seek to the start of the file\n");
         fclose(fp);
         return -1;
     }
@@ -184,7 +184,7 @@ static int load_content(const char *filename, bool exist, char **out_data, size_
     {
         if (ferror(fp))
         {
-            perror("error: cannot read the file");
+            fprintf(stderr, "error: cannot read the file\n");
         }
         else
         {
@@ -198,7 +198,7 @@ static int load_content(const char *filename, bool exist, char **out_data, size_
 
     if (fclose(fp) != 0)
     {
-        perror("error: cannot close the file");
+        fprintf(stderr, "error: cannot close the file\n");
         free(content);
         return -1;
     }
@@ -207,7 +207,7 @@ static int load_content(const char *filename, bool exist, char **out_data, size_
 
     if (fwrite(content, 1, read_bytes, stdout) != read_bytes)
     {
-        perror("error: cannot write the content to the stdout");
+        fprintf(stderr, "error: cannot write the content to the stdout\n");
         free(content);
         return -1;
     }

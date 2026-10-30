@@ -6,7 +6,7 @@ int scan(void)
 
     if (c == EOF && ferror(stdin))
     {
-        perror("error: cannot read the character");
+        fprintf(stderr, "error: cannot read the character\n");
     }
     else if (c == CTRL_S)
     {

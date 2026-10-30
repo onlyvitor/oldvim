@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 
         if (interactive && screen_apply_change(ed, &change) != 0)
         {
-            perror("error: cannot draw the change");
+            fprintf(stderr, "error: cannot draw the change\n");
             status = 1;
             break;
         }
