@@ -65,18 +65,18 @@ size_t line_end_index(const char *data, size_t len, size_t pos)
 
 void editor_row_column(const EditorFile *ef, size_t pos, size_t *row, size_t *column)
 {
-    size_t r = 0;
-
-    for (size_t i = 0; i < pos; i++)
-    {
-        if (ef->data[i] == '\n')
-        {
-            r++;
-        }
-    }
-
     if (row != NULL)
     {
+        size_t r = 0;
+
+        for (size_t i = 0; i < pos; i++)
+        {
+            if (ef->data[i] == '\n')
+            {
+                r++;
+            }
+        }
+
         *row = r;
     }
 
