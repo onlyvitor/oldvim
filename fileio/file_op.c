@@ -131,7 +131,7 @@ static void fsync_parent_dir(const char *path)
     free(copy);
 }
 
-/* Read the whole file into a NUL-terminated buffer and print it to stdout. */
+/* Read the whole file into a NUL-terminated buffer. */
 static int load_content(const char *filename, bool exist, char **out_data, size_t *out_len)
 {
     char *content = NULL;
@@ -220,13 +220,6 @@ static int load_content(const char *filename, bool exist, char **out_data, size_
     }
 
     content[read_bytes] = '\0';
-
-    if (fwrite(content, 1, read_bytes, stdout) != read_bytes)
-    {
-        fprintf(stderr, "error: cannot write the content to the stdout\n");
-        free(content);
-        return -1;
-    }
 
     *out_data = content;
     *out_len = read_bytes;

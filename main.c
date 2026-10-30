@@ -30,7 +30,13 @@ int main(int argc, char **argv)
     bool interactive = isatty(STDIN_FILENO) != 0;
     int status = 0;
 
-    for (;;)
+    if (interactive && (screen_write(ed->file->data, ed->file->len) != 0 || screen_flush() != 0))
+    {
+        fprintf(stderr, "error: cannot draw the file\n");
+        status = 1;
+    }
+
+    while (status == 0)
     {
         int key = scan();
 

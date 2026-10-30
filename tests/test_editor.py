@@ -26,7 +26,7 @@ class Session:
         if self.pid == 0:
             os.execv(BIN, [BIN, path])
 
-        self.drain()
+        self.initial = self.drain()
 
     def drain(self, timeout=0.15):
         out = b""
@@ -124,6 +124,14 @@ def test_vertical_movement_clamps_column(tmp):
     session.quit()
 
 
+def test_draws_file_on_startup(tmp):
+    case = Case(tmp)
+    path = case.write("a.txt", b"abc\n")
+    session = Session(path)
+    assert b"abc" in session.initial, "the file must be drawn after loading"
+    session.quit()
+
+
 def test_create_new_file(tmp):
     case = Case(tmp)
     path = case.path("new.txt")
@@ -161,6 +169,7 @@ def main():
         test_insert_in_the_middle,
         test_backspace_joins_lines,
         test_vertical_movement_clamps_column,
+        test_draws_file_on_startup,
         test_create_new_file,
         test_save_then_keep_editing,
         test_non_interactive_stdin,
