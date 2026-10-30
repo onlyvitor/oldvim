@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "editor.h"
-#include "input/input.h"
-#include "output/output.h"
-#include "terminal/terminal.h"
+#include "editor/editor.h"
+#include "io/input/input.h"
+#include "io/output/output.h"
+#include "io/terminal/terminal.h"
 
 int main(int argc, char **argv)
 {

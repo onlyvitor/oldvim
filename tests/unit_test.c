@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "editor.h"
+#include "editor/editor.h"
 #include "fileio/fileio.h"
 
 static int checks;

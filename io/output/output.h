@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "editor.h"
+#include "editor/editor.h"
 
 /*
  * Minimal terminal output primitives. They return 0 on success and -1 when

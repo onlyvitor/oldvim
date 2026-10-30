@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 #include "fileio/fileio.h"
-#include "key.h"
+#include "io/input/key.h"
 
 /* An open buffer plus the editing state that lives above the file. */
 typedef struct Editor
